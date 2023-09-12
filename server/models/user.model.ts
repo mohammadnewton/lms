@@ -56,4 +56,23 @@ const userSchema: Schema<IUser> = new mongoose.Schema({
       courseId: String,
     },
   ],
-}, {timestamps: true}); 
+}, {timestamps: true});
+
+// Hash Password before saving
+userSchema.pre<IUser>('save', async function (next) {
+  if (!this.isModified('password')) {
+    next();
+  }
+  const salt = await bcrypt.genSalt(10);
+  this.password = await bcrypt.hash(this.password, salt);
+  next();
+});
+
+// compare password
+userSchema.methods.comparePassword = async function (enteredPassword: string): Promise<boolean> {
+  return await bcrypt.compare(enteredPassword, this.password);
+};
+
+// export const User: Model<IUser> = mongoose.model<IUser>('User', userSchema);
+const userModel: Model<IUser> = mongoose.model("User", userSchema);
+export default userModel;
